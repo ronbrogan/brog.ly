@@ -1,0 +1,178 @@
+<html>
+
+<head>
+    <title>Ron Brogan's Link Shortener</title>
+    <script type="text/javascript">
+        var shortcutPrefix = "brog.ly/";
+        document.addEventListener("DOMContentLoaded", function(){
+            var fromField = document.querySelectorAll("[name=from]")[0];
+            fromField.value = shortcutPrefix;
+            fromField.addEventListener("keyup", fromKeyup);
+
+            var toField = document.querySelectorAll("[name=to]")[0];
+            toField.value = "http://";
+        });
+
+
+        function registerShortcut() {
+            var formBody = getPayload();
+            var resultElement = document.getElementById("registrationResult");
+            
+            var request = new XMLHttpRequest();
+            request.open("POST", "https://e0n9jxwfej.execute-api.us-east-1.amazonaws.com/prod/brogly-register_redirect");
+            request.setRequestHeader("Content-Type", "application/json");
+
+            request.onerror = function(){
+                resultElement.innerHTML = "Critical Error!";
+            };
+
+            request.onload = function(){
+                var status = request.status;
+
+                if(status >= 200 && status < 400) {
+                    resultElement.innerHTML = "Success: <a href='http://" + shortcutPrefix + formBody.from + "'>" + shortcutPrefix + formBody.from + "</a>";
+                } else {
+                    resultElement.innerHTML = "Error: " + request.responseText;
+                }
+            };
+
+            resultElement.innerHTML = "Processing...";
+            request.send(JSON.stringify(formBody));
+        }
+
+        function getPayload() {
+            var fromField = document.querySelectorAll("[name=from]")[0];
+            var toField = document.querySelectorAll("[name=to]")[0];
+
+            var sanitizedFrom = sanitizeFromValue(fromField.value.replace(shortcutPrefix, ""));
+
+            return {
+                from: encodeURIComponent(sanitizedFrom),
+                to: encodeURIComponent(toField.value)
+            };
+        }
+
+        function fromKeyup(e) {
+            var input = e.target;
+            var value = input.value;
+
+            var charPos = 0;
+            while(value && value.charAt(0) == shortcutPrefix.charAt(charPos)){
+                value = value.substr(1);
+                charPos++;
+            }
+
+            // strip illegal chars
+            value = sanitizeFromValue(value);
+
+            input.value = shortcutPrefix + value;
+        }
+
+        function sanitizeFromValue(fromVal) {
+            return fromVal.replace(/[^a-zA-Z0-9]/g, "");
+        }
+    </script>
+    <style>
+        html, body {
+            background-color: #F2F5EA;
+            color: #2C363F; 
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .container {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        label {
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            border: 2px solid #775253;
+            padding: 4px;
+            border-radius: 2px;
+        }
+
+        button {
+            border: 1px solid #775253;
+            border-radius: 2px;
+            padding: 7px 14px;
+            background-color: #BBC7A4;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #919B7F
+        }
+
+        hr {
+            border: none;
+            border-bottom: 1px solid #2C363F;
+        }
+
+        /* For mobile phones: */
+        [class*="col-"] {
+            width: 100%;
+            padding: 5px 7px;
+        }
+
+        @media only screen and (min-width: 768px) {
+            /* For desktop: */
+            .container {width: 75%;}
+            [class*="col-"] {
+                float: left;
+            }
+            [class*="col-"]::after {
+                clear:both;
+            }
+            .col-1  {width: calc(8.33%  - 14px);}
+            .col-2  {width: calc(16.66% - 14px);}
+            .col-3  {width: calc(25%    - 14px);}
+            .col-4  {width: calc(33.33% - 14px);}
+            .col-5  {width: calc(41.66% - 14px);}
+            .col-6  {width: calc(50%    - 14px);}
+            .col-7  {width: calc(58.33% - 14px);}
+            .col-8  {width: calc(66.66% - 14px);}
+            .col-9  {width: calc(75%    - 14px);}
+            .col-10 {width: calc(83.33% - 14px);}
+            .col-11 {width: calc(91.66% - 14px);}
+            .col-12 {width: calc(100%   - 14px);}
+        }
+
+    </style>
+    <link rel="shortcut icon" href="favicon.ico">
+</head>
+<body>
+<div class="container">
+    <div class="col-12 text-center">
+        <h1>Ron Brogan's Link Shortener!</h1>
+        <hr />
+    </div>
+    <form id="registerForm">
+        <div class="col-6">
+            <div>
+                <label>Redirect From:</label>
+                <input type="text" name="from" />
+            </div>
+            
+        </div>
+        <div class="col-6">
+            <label>Redirect To:</label><br />
+            <input type="text" name="to" /><br />
+        </div>
+        <div class="col-12">
+            <button onclick="registerShortcut()" type="button">Create</button>
+        </div>
+    </form>
+    <div class="col-6" id="registrationResult">
+        
+    </div>
+</div>
+</body>
+</html>
